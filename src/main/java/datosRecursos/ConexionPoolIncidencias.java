@@ -8,9 +8,17 @@ import org.apache.commons.dbcp.BasicDataSource;
 
 public class ConexionPoolIncidencias {
 	
-	private static String url="jdbc:postgresql://10.250.193.20:5434/dbpld";
+	/*Conexión a base de datos de prueba en desarrollo efectivale*/
+	//private static String url="jdbc:postgresql://10.250.193.20:5434/dbpld";
+	//private static String userName="postgres";
+	//private static String password="ver9batim";
+	
+	/*conexion a base de datos con credenciales a nueva instancia de amazon web service*/
+	private static String url="jdbc:postgresql://54.202.3.185:5432/postgres";
 	private static String userName="postgres";
-	private static String password="ver9batim";
+	private static String password="DbT3stSARO";
+	
+
 	private static BasicDataSource pool;
 	private static int numConexiones=0;
 	

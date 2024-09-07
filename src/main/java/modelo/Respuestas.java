@@ -18,7 +18,7 @@ public class Respuestas {
 		this.incidencias_id = incidencias_id;
 		this.host = host;
 		this.path = path;
-		this.fecha = fecha;
+		this.fecha =fecha;
 		this.responseCode = responseCode;
 	}
 
@@ -75,7 +75,7 @@ public class Respuestas {
 
 
 
-	public void setFecha(String  fecha) {
+	public void setFecha(String fecha) {
 		this.fecha =  fecha;
 	}
 
@@ -90,6 +90,9 @@ public class Respuestas {
 	public void setResponseCode(int responseCode) {
 		this.responseCode = responseCode;
 	}
+
+
+	
 	
 	
 	

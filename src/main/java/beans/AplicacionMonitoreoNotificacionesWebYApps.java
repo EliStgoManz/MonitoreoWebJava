@@ -10,18 +10,27 @@ import java.io.InputStreamReader;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.TimeZone;
+import java.util.logging.Logger;
+
+
+
 
 /*Librerías que utilizaremos para el envió de mensajes*/
 import javax.mail.Address;
@@ -43,12 +52,15 @@ import modelo.Respuestas;
 
 import javax.mail.MessagingException;
 
+
 import repositorio.IncidenciasRepositorioImpl;
 import repositorio.Repositorio;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
+
+
 
 public class AplicacionMonitoreoNotificacionesWebYApps {
 
@@ -60,6 +72,22 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 	private static String respuestaCuerpo = "REPORTE INCIDENCIAS SISTEMAS";
 	private final static Properties properties = new Properties();
 	private static Session session;
+	
+	
+	/*inicializar variables para leer archivo csv*/
+	private static BufferedReader lector;//lee el archivo
+	private static String linea;
+	private static String partes[]=null;
+	
+	/*Declaramos las variables que ocuparemos en el proceso de leer contactos en un archivo*/
+	private static String SEPARATOR= ",";
+	private static String QUOTE="\"";
+	
+	private static org.apache.log4j.Logger Logger;
+	private static org.apache.log4j.Logger log=Logger.getLogger(AplicacionMonitoreoNotificacionesWebYApps.class);
+    
+
+
 
 	private static void init() {
 
@@ -86,17 +114,40 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 	// MalformedURLException,IOException, MessagingException {
 	public static void main(String[] args) throws IOException, MalformedURLException {
 
+		/*Aquí leere el contenido del archivo txt que contendrá el Token de Facebook 
+		 *Aquí estamos manejando el uso de rutas absolutas, pues se especifica */
+		    //File fileToken=new File("C:/Users/eli.santiago/OneDrive - FleetCor/Documentos/Documentación-proyectosEfectivale/tokenMeta.txt");
+		    
+		    /*Ahora usaremos una ruta relativa, supongamos que nuestro archivo está en la carpeta resource dentro de nuestro
+		     *proyecto se ejecuta desde el directorio raíz del proyecto, pruebas en local*/
+		    
+		    File fileToken=new File("src/main/resources/tokenMeta.txt");
+		
+		    /*URL para token en pruebas de servidor, igual manejaremos manejo de ruta relativa, dentro de nuestro  servidor LINUX*/
+		    //File fileToken=new File("../MonitoreoWebYApp/tokenMeta.txt");
+		
+		     FileReader frt=new FileReader(fileToken);
+			BufferedReader BufToken=new BufferedReader(frt);
+			 String lineaToken="";
+			lineaToken= BufToken.readLine();
+			
+			System.out.println("imprime el token: "+ lineaToken);
+			
+		
+		
 		// TOKEN QUE NOS DA FACEBOOK
-		String token = "EAADsQKlicEMBO8ZBi4G7yZAihl91l0U8GjAidOf3dZC49jLsxA7hUHzBcc1Ux1GybnYzAJbyhKpotgTvzBELfT7mmkHKr0b3fjkkDGxFwN3eQciZBzeHqwU0Ng150VMueyre674pRznS68rDQJMZAvvIFBwZAaXdyni1FGO2ZAGlN7dgphI2zgMRGPJkwwRLwGDeRFhjN9fLvdMHaZAvkMbWsCmACk7j3F3oxgwZD";
+		String token = lineaToken;
 		// NUESTRO TELEFONO
 		// String telefono = "529516470269";
 		String telefono = "529516470269";
+		//String telefono = "525554518217";
+        //String telefono= "525610137835";		
+	    //arreglo de telefonos, crearemos un arrayList
+		List<String> numerosTelefonicos=List.of("529516470269","525610137835");
 		
-	    //arreglo de telefonos
+		BufferedReader br=null;
 		
-	   String [] telefonos=new String[2];
-	   telefonos[0]="529516470269";
-	   telefonos[1]="529516449114";
+	    Iterator<String> iterator=numerosTelefonicos.iterator();
 		
 		// IDENTIFICADOR DE NUMERO DE TELEFONO
 		String idNumero = "356387480887111";
@@ -112,12 +163,31 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 		// las url a leer
 		// se debe definir en concreto la ubicación del archivo(sea manera local o en
 		// algun servidor)
-		File fileUrls = new File(
-				"C:/Users/eli.santiago/OneDrive - FleetCor/Documentos/Documentación-proyectosEfectivale/UrlSistemas.txt");
-
+		
+		//esta url lee el archivo con las urls de manera local.(lo comentaremos)
+		String leeArchive="";
+	    
+		
+		//Ejemplo de ruta absoluta
+		
+		//File fileUrls = new File("C:/Users/eli.santiago/OneDrive - FleetCor/Documentos/Documentación-proyectosEfectivale/UrlSistemas.txt");
+		
+		//ejemplo de ruta relativa para leer archivo de urls
+		File fileUrls = new File("src/main/resources/UrlSistemas.txt");
+		
+	     
+		//ahora declararemos la url que ocuparemos para alojar en el servidor de amazon web service
+		
+		//File fileUrls=new File("/home/ec2-user/MonitoreoWebYApp/UrlSistemas.txt");
+		
+		//Manejo de ruta relativa para leer la ruta de URLS en servidor LINUX
+		//File fileUrls=new File("../MonitoreoWebYApp/UrlSistemas.txt");
+		
+		
 		// 1.-creando un objeto FileReader que contendra la direccion del archivo,
 		// podremos leer un fichero de texto.
 		try (FileReader fr = new FileReader(fileUrls)) {
+			//FileReader fc=new FileReader(fileDirecciones);
 
 			// 1.1-construimos un objeto BufferedReader
 			BufferedReader in1 = new BufferedReader(new InputStreamReader(new FileInputStream(fileUrls)));
@@ -127,20 +197,66 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 			 * siguiente forma:
 			 */
 			BufferedReader in = new BufferedReader(fr);
+			//BufferedReader inC=new BufferedReader(fc);
 			String inputLine = "";
+			String inputDir="";
+			String SEPARATOR1= ",";
 			StringBuffer response = new StringBuffer();
 			StringBuffer responsability = new StringBuffer();
+			String fields[]=null;
+			String numeros="";
+			String numContactos="";
+			//Leer contactos desde el csv
+		
+			
+			//Ejemplo con ruta absoluta
+			//List<String>contactos= leerContactos("C:/Users/eli.santiago/OneDrive - FleetCor/Documentos/Documentación-proyectosEfectivale/Contactos.csv");
+			
+			
+			//ejemplo con ruta relativa en directorio local:
+			
+			List<String>contactos= leerContactos("src/main/resources/Contactos.csv");
+			
+			//Ejemplo con ruta relativa en directorio de servidor LINUX
+			
+			//List<String>contactos= leerContactos("../MonitoreoWebYApp/Contactos.csv");
+			
+			
+			
+			System.out.println("leer contactos del CV2.4 "+contactos);
+			
+		
 
 			// Verificar y agregar protocolo si es necesario
-
+			
+			//br= new BufferedReader(new FileReader("C:/Users/eli.santiago/OneDrive - FleetCor/Documentos/Documentación-proyectosEfectivale/Contactos.csv"));
+			
+			//leemos una linea
+			//String line=br.readLine();
+			
+			//inputDir= inC.readLine();
+			
+			//System.out.println("leeme los contactos del cvs1.0: "+ inputDir);
+			
+			//while ((inputLine = in.readLine()) != null && inputDir!=null) {
+			//for(String contacto: contactos) {
+				
 			while ((inputLine = in.readLine()) != null) {
-
-				responsability = response.append(inputLine);
-				String resultRespons = responsability.toString();
+				
+				//inicio del ciclo for, que esta bien:
+				 
+			//for(String contacto: contactos) {
+			
+			  // String itemNumbers=iterator.next();
+			 
+			   //System.out.println("impriman numeros en iterator: "+ itemNumbers);
+	           responsability = response.append(inputLine);
+			   String resultRespons = responsability.toString();
 				// String data = "";
 
 				// Metodos para leer el contenido del archivo txt, contiene información de URLS
 				try {
+					
 					URL url = new URL(inputLine);
 					System.out.println("resultado de url: " + url);
 					HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -150,7 +266,8 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 					try (OutputStream os = conn.getOutputStream()) {
 						// byte[] input = data.getBytes("utf-8");
 						// os.write(input, 0, input.length);
-
+						//Enviar Mensajes a numeros
+						
 						int code = conn.getResponseCode();
 
 						/* Manejo de respuestas para monitoreo de Sistemas */
@@ -172,9 +289,21 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 						long date = conn.getDate();
 						Instant tempInstant = Instant.ofEpochMilli(date);
 						LocalDateTime ldt = LocalDateTime.ofInstant(tempInstant, TimeZone.getDefault().toZoneId());
-						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+						//DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy  HH:mm:ss");
+						
 						String fecha = ldt.format(formatter);
-
+						
+						//java.sql.Date fecha1=null;
+						
+						//fecha1= (Date) formatter.parse(fecha);
+						
+						
+						//System.out.println("imprimiendo fecha1: " + fecha1);
+						
+						//java.sql.Date sd=new java.sql.Date(formatter.parse(fecha));
+                        
+						
 						String respuestaOk = "";
 						String respuestaNOT_FOUND = "";
 						String respuestaSERVER_ERROR = "";
@@ -199,6 +328,12 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 								+ "ResponseCode: " + ResponseCode + "\n" + "protocolo: " + protocolo + "\n" + "host: "
 								+ host + "\n" + "authorithy: " + authority + "\n" + "puerto: " + port + "\n" + "path: "
 								+ path + "\n" + "contentType: " + contentType + "\n" + "fecha: " + fecha;
+						
+						
+						//Prueba del segundo for
+						for(String contacto: contactos) {
+						
+						
 
 						// COLOCAMOS LA URL PARA ENVIAR EL MENSAJE
 						URL urlFacebook = null;
@@ -227,8 +362,7 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 							OutputStreamWriter writer = null;
 							writer = new OutputStreamWriter(httpConn.getOutputStream());
 							
-							Repositorio<Respuestas> repositorio=new IncidenciasRepositorioImpl();
-							Respuestas respuestas= new Respuestas();
+							
 
 							/* Plantilla 1 de meta-FACEBOOK; Error: 404_NOT_FOUND */
 							if (code == conn.HTTP_OK) {
@@ -254,18 +388,14 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 							 */
 
 							try {
+								
 								if (code != conn.HTTP_OK) {
-									System.out.println(
-											"Manejo de respuesta error cuatrocerocuatro con nueva plantilla version 1.TEEN<3 : "
-													+ respuestaNOT_FOUND);
+									
+									System.out.println("Manejo de respuesta error cuatrocerocuatro con nueva plantilla version 1.twoo<3 : "+ respuestaNOT_FOUND);
 
-									/*
-									 * plantilla creada desde el panel de creación de plantillas en la api de
-									 * meta-developers; la cual contiene 4 variables o parametros, las cuales
-									 * mostrarán la información acerca de los sistemas que esten en vulnerabilidad
-									 */
-									writer.write("{" + "\"messaging_product\": \"whatsapp\","
-											+ "\"recipient_type\": \"individual\"," + "\"to\": \"" + telefonos + "\","
+								    //for(String contacto: contactos) {
+							        writer.write("{" + "\"messaging_product\": \"whatsapp\","
+											+ "\"recipient_type\": \"individual\"," + "\"to\": \"" +contacto + "\","
 											+ "\"type\": \"template\"," + "\"template\": {"
 											+ "\"name\": \"notificaciones_incidencias_sistemas_efectivale\","
 											+ "\"language\": { \"code\": \"es\"}," + "\"components\":  [ " + "{"
@@ -275,28 +405,18 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 											+ "\"text\": \"" + ResponseCode + "\" " + "}, " + "{"
 											+ "\"type\": \"text\"," + "\"text\": \"" + fecha + "\" " + "}" + "]" + "}"
 											+ "]" + "}" + "}");
-
-									// pruebas de envio de correo con gmail and java
-									boolean salidaCorreo;
-									salidaCorreo = salidaCorreos(respuestaTexto, path, host, ResponseCode, fecha);
-									System.out.println(
-											"impresion salida de correo con gmail and java 1.10:" + salidaCorreo);
 									
-									
-									respuestas.setPath(path);
-									respuestas.setHost(host);
-									respuestas.setResponseCode(ResponseCode);
-									respuestas.setFecha(fecha);
-									repositorio.guardar(respuestas);
-									
-
-								}
-
-							} catch (IOException | MessagingException e) {
-								System.out.println("causa de error: " + e.getCause());
+							  }
+								
+							 } catch (IOException e) {
+								  System.out.println("causa de error: " + e.getCause());
+								  log.error("Error al realizar proceso de validación de respuesta diferente a estatus 200 (OK)" + e);
+								
+								
 							}
-
-							writer.flush();
+							
+							
+						    writer.flush();
 							writer.close();
 							// cerramos la conexion
 							httpConn.getOutputStream().close();
@@ -311,40 +431,215 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 							// OBTENEMOS LOS RESULTADOS
 							String respuesta = s.hasNext() ? s.next() : "";
 
-							System.out.println("Response aplicacion MonitoreosAppAndWeb4.0? : " + respuesta);
+							System.out.println("Response aplicacion MonitoreosAppAndWeb5.1? : " + respuesta);
 
 							// s.close();
 							
+						
+						
+							
 						}catch(SQLException e) {
 							e.printStackTrace();
+							
+						 log.error("Error, al insertar incidencias en la tabla incidenciasServidores:  "+e);
 						}
+						
+						
 
 						} catch (Exception e) {
 							System.out.println("imprimiendo incidencia en salida de mensaje FB: " + e.getMessage());
+							log.error("Manejo de errores en el flujo de envío de mensajes WhatsApp con Api de Meta"+ e);
+						}finally {
+							if(br!=null) {
+								try {
+									br.close();
+								}catch(IOException ex) {
+									System.out.println("imprime exception" +ex.getMessage());
+									log.error(ResponseMessageGatewayTimeout);
+								}
+							}
+							
+							
+							
 						}
+						
+					//prueba de cierre del segundo for
+					}
+						
+						Repositorio<Respuestas> repositorio=new IncidenciasRepositorioImpl();
+						Respuestas respuestas= new Respuestas();
+						
+						//Este if, es para el envío de correos
+						if(code!=conn.HTTP_OK) {
+							//pruebas de envio de correo con gmail and java, esto va fuera del For
+							
+					        boolean salidaCorreo;
+							try {
+								salidaCorreo = salidaCorreos(respuestaTexto, path, host, ResponseCode,fecha);
+								System.out.println("impresion salida de correo con gmail and java 1.16:" + salidaCorreo);
+							} catch (MessagingException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+								log.error("manejando exceptions en salida de correos: "+ e);
+							}
+							
+							
+							System.out.println("se envió mensaje de whats app ");
+							
+							respuestas.setPath(path);
+							respuestas.setHost(host);
+							respuestas.setResponseCode(ResponseCode);
+							respuestas.setFecha(fecha);
+						
+							
+						    //respuestas.setFecha(java.sql.Date.valueOf(fecha));
+				            repositorio.guardar(respuestas);
+							
+						}
+						
+						
 
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 						System.out.println("leyendo flujo 1: " + e.getMessage());
+						log.error("Error al Leer el flujo de Lectura de codigos de Respuesta,envío de mensaje "+e);
 					}
+					
+					
+					
+				
 
 				} catch (MalformedURLException esc) {
 					esc.printStackTrace();
 					System.out.println("exception de MalFormedURLException: " + esc.getMessage());
+					log.error("exception al manejar envío de correos" + esc);
 				}
-
+				
+				
+				/*Fin del for (este es el ciclo del for)*/ 
+			 //}
+				
+				
+        
+		     
+				
+			/*Aquí realizare los ajustes completos acerca de envío de correos*/	
+				
+				
+		    
+			
+			//Este es el fin del ciclo WHILE	 
 			}
-			in.close();
-
-		} catch (IOException e) {
+		
+		    in.close();
+			//inC.close();
+		    
+		    
+		  //hasta aqui quiero que llegue el ciclo for
+			//}
+			
+	
+		     } catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.out.println("leyendo flujo 2: " + e.getMessage());
+			
+			log.error("Error al leer la entrada del archivo que contiene las urls a Monitorear : "+e);
 		}
-
+		
+		
+		
+		
+		
 	}
-
+	
+	
+	
+	public static String[] removeTrailingQuotes(String[] fields) {
+		String result[]= new String[fields.length];
+		for(int i=0; i<result.length; i++) {
+			result[i]= fields[i].replaceAll("^"+ QUOTE+ "", QUOTE).replaceAll(QUOTE + "$","");
+		}
+		return result;
+	}
+	
+	
+	public static String leerArchivo(String nombreArchivo) {
+		
+		try {
+			lector= new BufferedReader(new FileReader(nombreArchivo));
+			while((linea=lector.readLine())!=null) {
+	
+				partes=linea.split(",");
+				imprimirLinea();
+				System.out.println();
+			}
+			
+			lector.close();
+			linea=null;
+			partes=null;
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			log.error("obteniendo error al Leer líneas del archivo"+ e);
+		}
+		return nombreArchivo;
+	}
+	
+	
+	public static void imprimirLinea() {
+		for(int i=0; i<partes.length;i++) {
+			String contact=partes[i];
+			
+			System.out.println("contacto imprimirLinea: " +" | "+ contact);
+		
+		}
+	}
+	
+	
+	/*Metodo para leer los contactos desdel el archivo CSV con ayuda de un arrayList,
+	 *Esté es un método que leera una lista de tipo String, como parámetro recibe un archivo */
+	public static List<String> leerContactos(String nombreArchivo) {
+		
+		List<String>contactos=new ArrayList<>();
+		//definimos el caracter separador de cada fila, en este caso será una coma
+		String separador=",";
+		
+		/*declaramos un objeto de tipo BufferedReader para poder leer el contenido del archivo, en este caso la lectura será
+		 *de un fichero tipo: .CSV*/
+		try(BufferedReader br=new BufferedReader(new FileReader(nombreArchivo))) {
+			
+			//declaramos la variable String que se encargará de leer cada línea del archivo .csv
+			String line;
+			
+			/*declaramos un ciclo while, para declarar se lea cada dato
+			 * encontrada en cada lina, se detiene hasta que la linea encontrada este nula */
+			while((line=br.readLine())!=null) {
+				
+				String[]columnas=line.split(separador);
+				
+				//convertir el array en una lista y agregarlo a la lista princioal
+				List<String> fila=new ArrayList<>();
+				for(String columna: columnas) {
+					fila.add(columna.trim());
+				}
+				
+				//contactos.add(line.trim());//agregar el numero a la lista
+				
+				//Agregar la fila a la lista de datos csv
+				contactos.addAll(fila);
+			}//fin del ciclo while
+			
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		return contactos;
+	}
+	
+	
+	
 	// implementación de un método estático, para envió de correos
 	public static boolean buildMultipart(String cuerpoCorreo) throws MessagingException {
 		// Crear el cuerpo del mensaje
@@ -456,10 +751,13 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 		return true;
 
 	}
-
+	
+	
+	
+	
 	// implementación de un método estático, para envió de correos
 	public static boolean salidaCorreos(String cuerpoCorreo, String path, String host, int responseCode, String fecha)
-			throws MessagingException {
+			throws MessagingException, UnsupportedEncodingException {
 		// Crear el cuerpo del mensaje
 
 		init();
@@ -537,7 +835,9 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 			// InternetAddress("svalenzuela@saro.mx"));
 			// message.addRecipient(Message.RecipientType.TO, new
 			// InternetAddress("luisangel.sanchez@fleetcor.com"));
-			message.addRecipient(Message.RecipientType.TO, new InternetAddress("eli.santiago@fleetcor.com"));
+			
+			message.addRecipient(Message.RecipientType.TO, new InternetAddress("eli.santiago@fleetcor.com","humotoxic.1994@gmail.com"));
+			//message.addRecipient(Message.RecipientType.TO, new InternetAddress("svalenzuela@saro.mx"));
 			message.setSubject("REPORTE INCIDENCIAS EFECTIVALE");
 			message.setContent(cuerpoMensaje);
 

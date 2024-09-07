@@ -7,9 +7,15 @@ module MonitoreosAppyWeb {
 	exports modelo;
 
 	requires java.sql;
-	requires java.mail;
 	requires javax.activation;
 	requires commons.dbcp;
+	requires java.mail;
+	requires log4j;
+
+	
+	
+	
+	
 	
 
 }

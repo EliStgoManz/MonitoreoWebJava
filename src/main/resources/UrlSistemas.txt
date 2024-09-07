@@ -1,0 +1,14 @@
+https://seao.saro.mx/web/comida
+https://www.efectivale.com.mx/PLD2/login.jsp
+https://www.efectivale.com.mx/efectinet/login
+https://www.efectivale.com.mx/
+http://localhost:8080/SISeg/Proceso?pid=2
+http://localhost:8080/PLD2/BusquedaEstatusCliente
+https://portal.efectifintech.com.mx/efectinetviajesygastos/proceso?pid=2
+
+
+
+
+
+
+

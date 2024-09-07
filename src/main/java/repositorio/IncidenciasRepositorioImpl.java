@@ -84,9 +84,13 @@ public class IncidenciasRepositorioImpl implements Repositorio<Respuestas> {
 	 stmt.setInt(3, t.getResponseCode());
 	 
 	 if  (t.getIncidencias_id()!=null && t.getIncidencias_id()>0) {
-		 stmt.setString(4,t.getFecha()); 
+		 stmt.setString(4,t.getFecha());
+		 
+		 //stmt.setDate(4, (Date) t.getFecha());
 	 }else {
 		 stmt.setString(4,t.getFecha());
+		 
+		//stmt.setDate(4, (Date) t.getFecha());
 	 }
 	 
 	 
@@ -94,6 +98,7 @@ public class IncidenciasRepositorioImpl implements Repositorio<Respuestas> {
 	 stmt.executeUpdate();
 	}catch(SQLException e) {
 	 e.printStackTrace();
+	 System.out.println("incidencia al guardar en base datos incidencias"+ e.getMessage());
 	}
 	
 		
