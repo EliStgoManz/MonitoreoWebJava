@@ -152,21 +152,16 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 		// IDENTIFICADOR DE NUMERO DE TELEFONO
 		String idNumero = "356387480887111";
 
-		// realizamos nuestras propies respuestas:
-
-		// String respuestaTexto = "Hola queridos amigos de Efectivale, nos complace
-		// comunicarles\n por este medio";
-
-		/* Parte del código para monitoreo */
-
-		// colocaremos la dirección donde se alojara el archito texto(txt) que contiene
-		// las url a leer
-		// se debe definir en concreto la ubicación del archivo(sea manera local o en
-		// algun servidor)
-		
+      
 		//esta url lee el archivo con las urls de manera local.(lo comentaremos)
 		String leeArchive="";
 	    
+		 /* Parte del código para monitoreo */
+
+		/*colocaremos la dirección donde se alojara el archito texto(txt) que contiene
+		 las url a leer
+		 se debe definir en concreto la ubicación del archivo(sea manera local o en
+		 algun servidor)*/
 		
 		//Ejemplo de ruta absoluta
 		
@@ -176,11 +171,11 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 		File fileUrls = new File("src/main/resources/UrlSistemas.txt");
 		
 	     
-		//ahora declararemos la url que ocuparemos para alojar en el servidor de amazon web service
+		//ahora declararemos la url que ocuparemos para alojar en el servidor de amazon web service, esta es una ruta relativa
 		
 		//File fileUrls=new File("/home/ec2-user/MonitoreoWebYApp/UrlSistemas.txt");
 		
-		//Manejo de ruta relativa para leer la ruta de URLS en servidor LINUX
+		//Manejo de ruta relativa para leer archivo txt que contendrá  las rutas de URLS en servidor LINUX
 		//File fileUrls=new File("../MonitoreoWebYApp/UrlSistemas.txt");
 		
 		
@@ -206,50 +201,31 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 			String fields[]=null;
 			String numeros="";
 			String numContactos="";
+			
+			
 			//Leer contactos desde el csv
 		
-			
-			//Ejemplo con ruta absoluta
+			//Ejemplo con ruta absoluta, este ejemplo es de ruta en ambiente local de desarrollo
 			//List<String>contactos= leerContactos("C:/Users/eli.santiago/OneDrive - FleetCor/Documentos/Documentación-proyectosEfectivale/Contactos.csv");
 			
 			
-			//ejemplo con ruta relativa en directorio local:
+			//ejemplo con ruta relativa en directorio local del proyecto, haremos pruebas en ambiente local:
 			
-			List<String>contactos= leerContactos("src/main/resources/Contactos.csv");
+			List<String>contactosWhatsApp= leerDestinatariosContactos("src/main/resources/ContactosWhatsApp.csv");
 			
-			//Ejemplo con ruta relativa en directorio de servidor LINUX
+			//Ejemplo con ruta relativa en directorio donde alojaremos los archivos dentro de  servidor LINUX
 			
 			//List<String>contactos= leerContactos("../MonitoreoWebYApp/Contactos.csv");
 			
 			
 			
-			System.out.println("leer contactos del CV2.4 "+contactos);
+			System.out.println("leer contactos del CV2.4 "+contactosWhatsApp);
 			
 		
 
-			// Verificar y agregar protocolo si es necesario
-			
-			//br= new BufferedReader(new FileReader("C:/Users/eli.santiago/OneDrive - FleetCor/Documentos/Documentación-proyectosEfectivale/Contactos.csv"));
-			
-			//leemos una linea
-			//String line=br.readLine();
-			
-			//inputDir= inC.readLine();
-			
-			//System.out.println("leeme los contactos del cvs1.0: "+ inputDir);
-			
-			//while ((inputLine = in.readLine()) != null && inputDir!=null) {
-			//for(String contacto: contactos) {
-				
 			while ((inputLine = in.readLine()) != null) {
 				
-				//inicio del ciclo for, que esta bien:
-				 
-			//for(String contacto: contactos) {
-			
-			  // String itemNumbers=iterator.next();
-			 
-			   //System.out.println("impriman numeros en iterator: "+ itemNumbers);
+
 	           responsability = response.append(inputLine);
 			   String resultRespons = responsability.toString();
 				// String data = "";
@@ -264,8 +240,6 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 					conn.setDoOutput(true);
 
 					try (OutputStream os = conn.getOutputStream()) {
-						// byte[] input = data.getBytes("utf-8");
-						// os.write(input, 0, input.length);
 						//Enviar Mensajes a numeros
 						
 						int code = conn.getResponseCode();
@@ -330,8 +304,8 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 								+ path + "\n" + "contentType: " + contentType + "\n" + "fecha: " + fecha;
 						
 						
-						//Prueba del segundo for
-						for(String contacto: contactos) {
+						//Prueba del ciclo For para lectura de contactos que se encuentran dentro del archivo Contactos.csv
+						for(String contacto: contactosWhatsApp) {
 						
 						
 
@@ -351,7 +325,6 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 						httpConn.setRequestProperty("Content-Type",
 								"application/json; application/x-www-form-urlencoded; charset=UTF-8");
 
-						// httpConn.setRequestProperty("Content-type", "application/json");
 
 						// PREPARAMOS Y ENVIAMOS EL JSON
 						httpConn.setDoOutput(true);
@@ -463,7 +436,7 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 							
 						}
 						
-					//prueba de cierre del segundo for
+					//prueba de cierre del ciclo for
 					}
 						
 						Repositorio<Respuestas> repositorio=new IncidenciasRepositorioImpl();
@@ -600,7 +573,7 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 	
 	/*Metodo para leer los contactos desdel el archivo CSV con ayuda de un arrayList,
 	 *Esté es un método que leera una lista de tipo String, como parámetro recibe un archivo */
-	public static List<String> leerContactos(String nombreArchivo) {
+	public static List<String> leerDestinatariosContactos(String nombreArchivo) {
 		
 		List<String>contactos=new ArrayList<>();
 		//definimos el caracter separador de cada fila, en este caso será una coma
@@ -817,29 +790,25 @@ public class AplicacionMonitoreoNotificacionesWebYApps {
 					+ "     </table>" + "    </td>" + " </tr>"
 
 					+ "    </tr>" + "  </table>" + "</body>" + "</html>", "text/html; charset=utf-8");
-
+		   
+			
+			
+			List<String>contactosCorreos= leerDestinatariosContactos("src/main/resources/contactosCorreo.csv");
 			// Agregar las partes al cuerpo del mensaje
 //	        cuerpoMensaje.addBodyPart(texto);
 			cuerpoMensaje.addBodyPart(htmlParte);
 
-			/*
-			 * properties.put("mail.smtp.ssl.trust", "smtp.gmail.com");
-			 * properties.setProperty("mail.smtp.starttls.enable", "true");
-			 * properties.setProperty("mail.smtp.port", "587");
-			 * properties.setProperty("mail.smtp.ssl.protocols","TLSv1.2");
-			 */
 
 			MimeMessage message = new MimeMessage(session);
 			message.setFrom(new InternetAddress(emailFrom));
-			// message.addRecipient(Message.RecipientType.TO, new
-			// InternetAddress("svalenzuela@saro.mx"));
-			// message.addRecipient(Message.RecipientType.TO, new
-			// InternetAddress("luisangel.sanchez@fleetcor.com"));
-			
-			message.addRecipient(Message.RecipientType.TO, new InternetAddress("eli.santiago@fleetcor.com","humotoxic.1994@gmail.com"));
-			//message.addRecipient(Message.RecipientType.TO, new InternetAddress("svalenzuela@saro.mx"));
+			for(String contactoCorreo: contactosCorreos) {
+				
+			System.out.println("imrpime correos: "+ contactoCorreo);
+		    message.addRecipient(Message.RecipientType.TO, new InternetAddress(contactoCorreo));
 			message.setSubject("REPORTE INCIDENCIAS EFECTIVALE");
 			message.setContent(cuerpoMensaje);
+			
+			}
 
 			Transport mTransport = session.getTransport("smtp");
 			mTransport.connect(emailFrom, passwordFrom);
